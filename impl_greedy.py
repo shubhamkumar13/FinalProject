@@ -76,11 +76,6 @@ class Circle(object):
     def __repr__(self):
         return "( x - %s )^2 + ( y - %s )^2 = %s^2\n" % (self.point_origin.x, self.point_origin.y, radius)
 
-    def __len__(self):
-        c = 0
-        for c in circles:
-            c += 1
-        return c
 
 
 def distPoint_Point(point1, point2):
@@ -107,6 +102,17 @@ def distPoint_Line(point: Point, line: Line):
 
 
 def isIntersection(circle1: Circle, circle2: Circle = None, line: Line = None):
+    '''
+        checks if a line segment is inside
+        by using calculating 
+        --if line segment points inside the circle
+        --if line segment distance from center < radius
+
+        if above 2 satisfied
+            line segment inside the circle
+        
+        create a dict for (index of circle) -> [all(index of line)]
+    '''
     if line is None and circle2 is not None:
         line = Line(circle1.point_origin, circle2.point_origin)
         if line.Length() < circle1.Radius() + circle2.Radius():
@@ -153,14 +159,41 @@ def convert_points_matrix(points):
     matrix = np.array(matrix)
     return matrix
 
+class lineCollection(object):
+    def __init__(self, lines):
+        self.lines = lines
+    
+    def NumLines(self):
+        c = len(self.lines)
+        return c
+
+    def DictLines(self):
+        c = self.NumLines()
+        key = [i for i in range(c)]
+        value = [line for line in self.lines]
+        dict_lines = cl.OrderedDict(zip(key, value))
+        return dict_lines
+
+class circleCollection(object):
+    def __init__(self, circles):
+        self.circles = circles
+    
+    def NumCircles(self):
+        c = len(self.circles)
+        return c
+    
+    def DictCircles(self):
+        pass
+
+
 
 def Random_Lines(points):
-    """
+    '''
         input points in pairs which form lines
         since points are genrated randomly
         need to take point pairs
         that would serve as input lines
-    """
+    '''
     Lines = list()
     for index in range(1, len(points)):
         temp_lines = Line(points[index-1], points[index])
@@ -169,11 +202,11 @@ def Random_Lines(points):
 
 
 def Random_Circles(points, radius=5):
-    """
+    '''
         input points not pairs of points
         this means generate points
         then the unit radii would take care
-    """
+    '''
     circles = list()
     for p in points:
         circles.append(Circle(p0=p, radius=radius))
@@ -214,7 +247,7 @@ def display_circles(circles):
         create a display of circles
     '''
     pass
-
+"""
 def LengthIntersection(line:Line, circle:Circle):
     '''
         calculate the length of the line
@@ -252,6 +285,11 @@ def GetDelta(lines, circles):
     dict_circle_delta = cl.OrderedDict(sorted(dict_circle_delta.items(), key=lambda t: t[1]))
     return dict_circle_delta
 
+def ChangeDeltaDict(delta_dict, delta_value):
+    for key,value in delta_dict.items():
+        pass
+    pass
+"""
 
 def disk_cover_algorithm(circles, lines):
     pass
