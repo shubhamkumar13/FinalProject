@@ -89,17 +89,23 @@ def square(x):
 def distPoint_Line(point: Point, line: Line):
     '''
     distance between point and line
-    '''
-    if line.Length() == 0:
-        return distPoint_Point(point, line.point1)
-    else:
-        t = ((point.x - line.point1.x)*(line.point2.x - line.point1.x) +
-             (point.y - line.point1.y)*(line.point2.y - line.point1.y)) / line.Length()
-        t = max(0, min(1, t))
-        new_point = Point(line.point1.x + t*(line.point2.x - line.point1.x),
-                          line.point1.y + t*(line.point2.y - line.point1.y))
-        return distPoint_Point(point, new_point)
+    | ax + by + c |     | mx - y + c |
+    --------------- = ------------------
+    sqrt(a^2 + b^2)      sqrt(m^2 + 1)
 
+    where x and y are points
+    and |-| means absolute value
+    '''
+    x = point.x
+    y = point.y
+    m = line.Slope()
+    c = line.Y_intercept()
+
+    den = sqrt( square(m) + 1 )
+    num = abs( m*x - y + c )
+    dist = num / den
+
+    return dist
 
 def isIntersection(circle1: Circle, circle2: Circle = None, line: Line = None):
     '''
