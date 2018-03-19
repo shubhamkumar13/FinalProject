@@ -77,8 +77,7 @@ class Circle(object):
         return "( x - %s )^2 + ( y - %s )^2 = %s^2\n" % (self.point_origin.x, self.point_origin.y, radius)
 
 
-
-def distPoint_Point(point1, point2):
+def DistPointPoint(point1, point2):
     return sqrt(square(point1.x - point2.x) + square(point1.y - point2.y))
 
 
@@ -86,7 +85,7 @@ def square(x):
     return x**2
 
 
-def distPoint_Line(point: Point, line: Line):
+def DistPointLine(point: Point, line: Line):
     '''
     distance between point and line
     | ax + by + c |     | mx - y + c |
@@ -101,22 +100,45 @@ def distPoint_Line(point: Point, line: Line):
     m = line.Slope()
     c = line.Y_intercept()
 
-    den = sqrt( square(m) + 1 )
-    num = abs( m*x - y + c )
+    if m == float("Inf"):
+        c = line.X_intercept()
+        num = abs(x - c)
+        den = 1
+    else:
+        den = sqrt(square(m) + 1)
+        num = abs(m*x - y + c)
     dist = num / den
 
     return dist
 
-def isIntersection(circle1: Circle, circle2: Circle = None, line: Line = None):
+def PointInCircle(point, circle):
     '''
-        checks if a line segment is inside
+    if (x - a)^2 + (y - b)^2 - r^2 < 0 :
+        true
+    else:
+        false
+    
+    '''
+    dist = DistPointPoint(point, circle.point_origin)
+    dist = square(dist)
+    radius = circle.Radius()
+    radius = square(radius)
+    if dist - radius < 0:
+        return True
+    else:
+        return False
+
+def IsIntersection(circle1: Circle, circle2: Circle = None, line: Line = None):
+    '''
+    1---checks if circles intersect
+    2---checks if a line segment is inside
         by using calculating 
         --if line segment points inside the circle
         --if line segment distance from center < radius
 
         if above 2 satisfied
             line segment inside the circle
-        
+
         create a dict for (index of circle) -> [all(index of line)]
     '''
     if line is None and circle2 is not None:
@@ -126,11 +148,17 @@ def isIntersection(circle1: Circle, circle2: Circle = None, line: Line = None):
         else:
             return False
     elif line is not None and circle2 is None:
-        dist_centre_line = distPoint_Line(circle1.point_origin, line)
-        if dist_centre_line < circle1.Radius():
+        point1 = line.point1
+        point2 = line.point2
+
+        if PointInCircle(point1, circle1) or PointInCircle(point2, circle2):
             return True
         else:
-            return False
+            dist_centre_line = DistPointLine(circle1.point_origin, line)
+            if dist_centre_line < circle1.Radius():
+                return True
+            else:
+                return False
     else:
         return False
 
@@ -165,10 +193,11 @@ def convert_points_matrix(points):
     matrix = np.array(matrix)
     return matrix
 
+
 class lineCollection(object):
     def __init__(self, lines):
         self.lines = lines
-    
+
     def NumLines(self):
         c = len(self.lines)
         return c
@@ -180,17 +209,21 @@ class lineCollection(object):
         dict_lines = cl.OrderedDict(zip(key, value))
         return dict_lines
 
+
 class circleCollection(object):
     def __init__(self, circles):
         self.circles = circles
-    
+
     def NumCircles(self):
         c = len(self.circles)
         return c
-    
-    def DictCircles(self):
-        pass
 
+    def DictCircles(self):
+        c = self.NumCircles()
+        key = [i for i in range(c)]
+        value = [line for line in self.circles]
+        dict_circles = cl.OrderedDict(zip(key, value))
+        return dict_circles
 
 
 def Random_Lines(points):
@@ -253,6 +286,8 @@ def display_circles(circles):
         create a display of circles
     '''
     pass
+
+
 """
 def LengthIntersection(line:Line, circle:Circle):
     '''
@@ -296,6 +331,65 @@ def ChangeDeltaDict(delta_dict, delta_value):
         pass
     pass
 """
+
+class Intersection(object):
+    line_and_circle = cl.OrderedDict()
+    circle_and_circle = cl.OrderedDict()
+    def __init__(self, dict_lines, dict_circles):
+        self.dict_lines = dict_lines
+        self.dict_circles = dict_circles
+        self.line_and_circle = None
+        self.circle_and_circle = None
+    
+    def LineCircle(self):
+        temp_list = list()
+        temp_dict = dict()
+        for key_circle, circle in self.dict_circles.items():
+            for key_line, line in self.dict_lines.items():
+                if IsIntersection(circle, line):
+                    temp_list.append(key_line)
+            temp_dict[key_circle] = temp_list
+            temp_list = []
+        temp_dict = cl.OrderedDict(temp_dict)
+        self.line_and_circle = temp_dict
+    
+    def CircleCircle(self):
+        temp_list = list()
+        temp_dict = dict()
+        for key_circle, circle in self.dict_circles.items():
+            n = len(self.dict_circles)
+            for i in range(key_circle + 1, n):
+                if IsIntersection(circle, self.dict_circles[i]):
+                    temp_list.append(self.dict_circles[i])
+            temp_dict[key_circle] = temp_list
+            temp_list = []
+        temp_dict = cl.OrderedDict(temp_dict)
+        self.circle_and_circle = temp_dict
+
+    def FindCommon(self, c1, c2):
+        check_list1 = self.line_and_circle[c1]
+        check_list2 = self.line_and_circle[c2]
+
+        common_lines = [i for i in check_list1 if i in check_list2]
+        
+        if len(common_lines) == 0:
+            return None
+        else:
+            return common_lines
+
+
+    def CircleLineCircle(self):
+        common_dict = cl.OrderedDict()
+        for key,values in self.circle_and_circle.items():
+            for val in values:
+                temp2 = self.FindCommon(key, val)
+                if temp2 is not None:
+                    temp1 = [key, val]
+                    common_dict[temp1] = temp2
+                temp1 = []           
+        
+        return common_dict
+    
 
 def disk_cover_algorithm(circles, lines):
     pass
