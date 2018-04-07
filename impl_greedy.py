@@ -2,6 +2,9 @@ from math import sqrt, ceil, floor
 import numpy as np
 from scipy.spatial import ConvexHull
 from bokeh.plotting import figure, output_file, show
+from bokeh.layouts import row
+from bokeh.models import ColumnDataSource, DataRange1d, Plot, LinearAxis, Grid
+from bokeh.models.glyphs import Circle, Segment
 from random import randint
 from matplotlib import collections as mc
 import collections as cl
@@ -15,9 +18,9 @@ from itertools import zip_longest
 from sympy import Symbol
 import sys
 
-orig_stdout = sys.stdout
-f = open('/home/shubham/lsdc/output.txt', 'a')
-sys.stdout = f
+# orig_stdout = sys.stdout
+# f = open('/home/shubham/lsdc/output.txt', 'a')
+# sys.stdout = f
 
 # class Point(object):
 #     def __init__(self, x, y):
@@ -160,6 +163,10 @@ class Intersection(object):
     circle_and_line = cl.OrderedDict()
     delta = cl.OrderedDict()
     new_delta = cl.OrderedDict()
+    # circle_line_set = set()
+    # circle_circle_set = set()
+    # line_circle_set = set()
+    circle_pairs = list()
 
     def __init__(self, dict_lines, dict_circles):
         print("reached init intersection")
@@ -168,9 +175,13 @@ class Intersection(object):
         self.circle_and_line = self.CircleLine()
         self.circle_and_circle = self.CircleCircle()
         self.circle_line_length = self.CircleLineSum()
-        # self.common_dict = None
+        self.circle_pairs = self.CirclePairList()
+        self.common_dict = self.CirclePairLineDict()
         # self.line_circle_length = self.LineCircleSum()
         # self.line_and_circle = self.LineCircle()
+        # self.circle_line_set = set(self.circle_and_line)
+        # self.circle_circle_set = set(self.circle_and_circle)
+        # self.line_circle_set = set(self.line_and_circle)
         print("Bye Init")
 
     # def Intersects(self, circle1, line=None, circle2=None):
@@ -224,7 +235,7 @@ class Intersection(object):
                 # }
 
                 case = {
-                    "A": v_unit["p1 out c1"] and v_unit["p2 out c1"] and v_unit["p1 out c2"] and v_unit["p2 out c2"],
+                    "A": (v_unit["p1 out c1"] and v_unit["p2 out c1"] and v_unit["p1 out c2"] and v_unit["p2 out c2"]),
 
                     "B": ((v_unit["p1 out c1"] and v_unit["p2 out c1"])  
                         and ((v_unit["p2 in c2"] and v_unit["p1 out c2"]) or (v_unit["p2 in c1"] and v_unit["p2 out c1"]))),
@@ -304,10 +315,10 @@ class Intersection(object):
                     elif case["E"]:
                         p1 = points1[0]
                         p2 = points2[0]
-                        temp = p2.distance(p1)
+                        temp = p2.distance(p1).evalf()
                         return temp
                 else:
-                    return None                    
+                    return None               
 
 
                 # index = line_interesection_list.index(line)
@@ -327,14 +338,164 @@ class Intersection(object):
                 # print(excess)
                 # return excess
 
-    def GetCommonDict(self, circle):
-        line_interesection_list=self.circle_and_line[circle]
-        circle_intersection_list=self.circle_and_circle[circle]
-        for circle2 in circle_intersection_list:
-            for line in line_interesection_list:
-                value_common=self.TwoCirclesOneLine(circle, circle2, line)
-                if value_common is not None:
-                    self.common_dict[circle, circle2, line]=value_common
+    def CirclePairList(self):
+        pair_list = [[key,v] for key, value in self.circle_and_circle.items() for v in value]
+        ctr = cl.Counter(frozenset(x) for x in pair_list)
+        # boolean = [ctr[frozenset(x)] > 0 for x in pair_list]
+
+        pair_list = [list(k) for k,v in ctr.items()]
+        print("Pairs")
+        pprint.pprint(pair_list)
+        print("\n")
+        return pair_list
+    
+    def overlap(self, min1, max1, min2, max2):
+        return max(0, min(max1, max2) - max(min1, min2))
+    
+    def checkval(self, val):
+        if val < 1:
+            return 0
+        else:
+            return val
+
+    def GetCommonVal(self, line_tuple1, line_tuple2, circle_pair):
+        val = float()
+        if line_tuple1[0] == line_tuple2[0]:
+            p1 = line_tuple1[1]
+            p2 = line_tuple2[1]
+            line = self.dict_lines[line_tuple1[0]]
+            t1, t2 = line.points
+            dist = line.length
+            if len(p1) == 2 and len(p2) == 2:
+                a1, a2 = p1[0], p1[1]
+                b1, b2 = p2[0], p2[1]
+                
+                norm_a1 = a1.distance(t1) / dist
+                norm_a2 = a2.distance(t1) / dist
+                norm_b1 = b1.distance(t1) / dist
+                norm_b2 = b2.distance(t1) / dist
+
+                norm = [norm_a1, norm_a2, norm_b1, norm_b2]
+                norm.sort()
+                val = self.overlap(norm[0], norm[2], norm[1], norm[3])
+                val = float(val*dist)
+
+                # # if a1.distance(b2) >= a2.distance(b1):
+                # #     val = float(a2.distance(b1))
+                # # if a1.distance(b2) <= a2.distance(b1):
+                # #     val = float(a1.distance(b2))
+                # d1 = line_tuple1[2]
+                # d2 = line_tuple2[2]
+                # if a1.distance(a2) < a1.distance(b2):
+                #     val = float(b1.distance(a2))
+                # elif a1.distance(a2) > a1.distance(b2):
+                #     val = float(b1.distance(b2))
+                # elif b1.distance(b2) > a1.distance(b2):
+                #     val = float(a1.distance(a2))
+                    
+            elif len(p1) == 2 and len(p2) == 1:
+                a1, a2 = p1[0], p1[1]
+                b1 = p2[0]
+                norm_a1 = a1.distance(t1) / dist
+                norm_a2 = a2.distance(t1) / dist
+                norm_b1 = b1.distance(t1) / dist
+                norm_b2 = 1.0
+                    
+
+                norm = [norm_a1, norm_a2, norm_b1, norm_b2]
+                norm.sort()
+                val = self.overlap(norm[0], norm[2], norm[1], norm[3])
+                val = float(val*dist)
+                # if a1.distance(a2) > a1.distance(b1) or not(a1.distance(a2) < a2.distance(b1)):
+                #     val = float(a2.distance(b1))
+                # elif a1.distance(a2) < b1.distance(a2) or a1.distance(a2) < a2.distance(b1):
+                
+                #     val = float(a1.distance(a2)) 
+            elif len(p1) == 1 and len(p2) == 2:
+                a2 = p1[0]
+                b1,b2 = p2[0], p2[0]
+                
+                norm_a1 = 0
+                norm_a2 = a2.distance(t1) / dist
+                norm_b1 = b1.distance(t1) / dist
+                norm_b2 = b2.distance(t1) / dist
+            
+                
+                norm = [norm_a1, norm_a2, norm_b1, norm_b2]
+                norm.sort()
+                val = self.overlap(norm[0], norm[2], norm[1], norm[3])
+                val = float(val*dist)
+
+                # if b1.distance(b2) > b1.distance(a1):
+                #     val = float(a1.distance(b1))
+                # elif b2.distance(b1) < a1.distance(b2) or b2.distance(b1) < a1.distance(b1):
+                #     val = float(a1.distance(b2))
+            elif len(p1) == 1 and len(p2) == 1:
+                a1, b1 = p1[0], p2[0]
+                c1, c2 = self.dict_circles[circle_pair[0]], self.dict_circles[circle_pair[1]]
+
+                if c1.encloses_point(t1) and c2.encloses_point(t1) and not(c1.encloses_point(t2)) and not(c2.encloses_point(t1)):
+                    val = min(a1.distance(t1).evalf(), b1.distance(t1).evalf())
+                    val = float(val)
+                if c1.encloses_point(t2) and c2.encloses_point(t2) and not(c1.encloses_point(t1)) and not(c2.encloses_point(t1)):
+                    val = min(a1.distance(t2).evalf(), b1.distance(t2).evalf())
+                    val = float(val)
+                   
+                # if c2.encloses_point(a1) and c2.encloses_point(t1) and not(c2.encloses_point(t2)):
+                #     val = float(t1.distance(a1))
+                # elif c1.encloses_point(b1) and c1.encloses_point(t2) and not(c1.encloses_point(t1)):
+                #     val = float(t2.distance(b1))
+                # elif (c1.encloses_point(b1) and c1.encloses_point(t1)) and (c2.encloses_point(a1) and c2.encloses_point(t2)):
+                #     val = float(a1.distance(b1))
+
+        else:
+            val = None
+
+        val = self.checkval(val)
+        return val
+        
+    def CirclePairLineDict(self):
+        temp_dict = dict()
+        for pair in self.circle_pairs:
+            list1 = self.circle_and_line[pair[0]]
+            list2 = self.circle_and_line[pair[1]]
+            set1 = set(list1)
+            set2 = set(list2)
+            s = list(set1.intersection(set2))
+            print(pair)
+            for element in s:
+                print(element)
+                print(list1)
+                print(list2)
+                index1 = list1.index(element)
+                index2 = list2.index(element)
+                len_list1 = self.circle_line_length[pair[0]]
+                len_list2 = self.circle_line_length[pair[1]]
+                value = self.GetCommonVal(len_list1[index1], len_list2[index2], pair)
+                pair = tuple(pair)
+                if value is not None and value != 0:
+                    temp_dict[(pair, element)] = value
+        
+        return temp_dict
+
+            
+
+        
+
+    
+
+    # def GetCommonDict(self, circle):
+    #     line_interesection_list=self.circle_and_line[circle]
+    #     circle_intersection_list=self.circle_and_circle[circle]
+    #     for circle2 in circle_intersection_list:
+    #         for line in line_interesection_list:
+    #             value_common=self.TwoCirclesOneLine_temp(circle, circle2, line)
+    #             if value_common is not None:
+    #                 if float(value_common) > 0.0 and float(value_common) < 1.0:
+    #                     self.common_dict[frozenset([circle, circle2]), line] = floor(value_common) 
+    #                 else:
+    #                     self.common_dict[frozenset([circle, circle2]), line]= value_common  
+
 
     # def GenerateDisks(self):
     #     print("Creating new disks")
@@ -377,7 +538,7 @@ class Intersection(object):
             for key_circle, circle in self.dict_circles.items():
                 if key_circle != key_circle_main:
                     points=circle_main.intersection(circle)
-                    if len(points) > 0:
+                    if len(points) == 2 and points[0].distance(points[1]) > 1:
                         temp_list.append(key_circle)
             temp_dict[key_circle_main]=temp_list
             temp_list=list()
@@ -397,9 +558,8 @@ class Intersection(object):
     #         temp_dict[key_line] = temp_list
     #         temp_list = []
     #     temp_dict = cl.OrderedDict(temp_dict)
-    #     return temp_dict
     #     print("end line and circle dict")
-
+    #     return temp_dict
     # The Following function gives out the length of intersection
     # Only when They are SYMPY objects
     # Amount line present in a circle
@@ -436,39 +596,48 @@ class Intersection(object):
     def GetIndividualCircleLength(self, index):
         length_segment=list()
         line_index=self.circle_and_line[index]
+        circle=self.dict_circles[index]
         for line in line_index:
 
             line_seg=self.dict_lines[line]
-
-            circle=self.dict_circles[index]
 
             temp=line_seg.intersection(circle)
             if circle.encloses_point(line_seg.p1):
                 temp_point=temp[0]
                 temp_val=line_seg.p1.distance(temp[0]).evalf()
+                temp[0] = Point(float(temp_point.x), float(temp_point.y))
             elif circle.encloses_point(line_seg.p2):
                 temp_point=temp[0]
                 temp_val=line_seg.p2.distance(temp_point).evalf()
+                temp[0] = Point(float(temp_point.x), float(temp_point.y))
             elif circle.encloses_point(line_seg.p1) and circle.encloses_point(line_seg.p1):
                 temp_point1=line_seg.p1
                 temp_point2=line_seg.p2
                 temp_val=temp_point2.distance(temp_point1).evalf()
-            else:
-                if len(temp) > 0:
+                temp[0] = Point(float(temp_point1.x), float(temp_point1.y))
+                temp[1] = Point(float(temp_point2.x), float(temp_point2.y))
+            elif not(circle.encloses_point(line_seg.p1) and circle.encloses_point(line_seg.p2)):
+                if len(temp) == 2:
                     temp_point1=temp[0]
                     temp_point2=temp[1]
                     temp_val=temp_point2.distance(temp_point1).evalf()
+                    temp[0] = Point(float(temp_point1.x), float(temp_point1.y))
+                    temp[1] = Point(float(temp_point2.x), float(temp_point2.y))
                 else:
                     continue
 
-            length_segment.append(temp_val)
+            temp_val = float(temp_val)
+            if temp_val < 1:
+                temp_val = 0
+
+            length_segment.append((line,temp,temp_val))
 
         return length_segment
 
     def ListSum(self, list_val):
         sum=0
-        for v in list_val:
-            sum=sum + v
+        for (line,points,value) in list_val:
+            sum=sum + value
         return sum
 
     def CircleLineSum(self):
@@ -480,7 +649,7 @@ class Intersection(object):
 
         for key, value in delta_dict.items():
             delta_sum=self.ListSum(value)
-            temp_dict[key]=delta_sum
+            temp_dict[key]= delta_sum
 
         temp_dict=sorted(temp_dict.items(), key=lambda t: t[1], reverse=True)
         self.delta=temp_dict
@@ -524,18 +693,46 @@ class Intersection(object):
 
     #     self.line_circle_length = temp_dict
 
-def GetNewDelta(delta, common_dict):
-    delta_temp = delta
-    for k,v in delta_temp.items():
-        for key,value in common_dict.items():
-            if k == key[0]:
-                temp = delta[key[1]]
-                temp = temp - value
-                delta[key[1]] = temp
+    def GetNewDelta(self):
+        temp_delta = cl.OrderedDict(self.delta)
+        delta_key = [k for k,v in temp_delta.items()]
+        key_list = [k for k,v in temp_delta.items()]
+        common_dict = self.common_dict
+        
+        for k, v in common_dict.items():
+            c, l = k
+            c1, c2 = c
+            if delta_key.index(c1) > delta_key.index(c2):
+                temp = temp_delta[c1]
+                temp = temp - v
+                temp = self.checkval(temp)
+                temp_delta[c1] = temp
+            if delta_key.index(c1) < delta_key.index(c2):
+                temp = temp_delta[c2]
+                temp = temp - v
+                temp = self.checkval(temp)
+                temp_delta[c2] = temp
+
+        
+        for key in key_list:
+            if temp_delta[key] >= 1:
+                self.new_delta[key] = temp_delta[key]
+
+        # for key in key_list:
+        #     self.new_delta[key] = temp_delta.pop(key, None)
+        #     for k, v in common_dict.items():
+        #         c, l = k
+        #         if key == c[0] and c[1] in temp_delta:
+        #             temp = float(temp_delta[c[1]])
+        #             temp = abs(temp - v)
+        #             temp = self.checkval(temp)
+        #             temp_delta[c[1]] = temp
+
+
     
-    return delta
 
-
+def disk_removal(circle_obj, line_obj):
+    pass
 
 def disk_cover_algorithm(circle_obj, line_obj):
     dict_lines=line_obj.dict_lines
@@ -543,8 +740,8 @@ def disk_cover_algorithm(circle_obj, line_obj):
     intersection_obj=Intersection(dict_lines, dict_circles)
     # old_intersection_obj = Intersection(dict_lines, dict_circles)
 
-    intersection_dict=cl.OrderedDict()
-    intersection_dict=intersection_obj.circle_and_line
+    line_intersection_dict=cl.OrderedDict()
+    line_intersection_dict=intersection_obj.circle_and_line
     circle_intersection_dict=intersection_obj.circle_and_circle
 
     print("\n\n")
@@ -555,7 +752,7 @@ def disk_cover_algorithm(circle_obj, line_obj):
     pprint.pprint(dict_circles)
     print("\n\n")
     print("Circle and Line Intersection Index")
-    pprint.pprint(intersection_dict)
+    pprint.pprint(line_intersection_dict)
     print("\n\n")
     print("Circle and Circle Interesection Index")    
     pprint.pprint(circle_intersection_dict)
@@ -576,30 +773,32 @@ def disk_cover_algorithm(circle_obj, line_obj):
     pprint.pprint(delta)
     print("\n\n")    
 
-    for key, value in delta.items():
-        intersection_obj.GetCommonDict(key)
-
-    common_dict=intersection_obj.common_dict
     # print("Common Dictionary")
     # pprint.pprint(common_dict)
     # print("\n\n")
     
-    new_delta = GetNewDelta(delta, common_dict)
-    new_delta = sorted(new_delta.items(), key=lambda t: t[1], reverse=True)
+    common_dict = intersection_obj.common_dict
+    print("Common Dict \n")
+    pprint.pprint(common_dict)
+    print("\n")
+    intersection_obj.GetNewDelta()
+    new_delta = intersection_obj.new_delta
     new_delta = cl.OrderedDict(new_delta)
 
     print("New reduced delta")
     pprint.pprint(new_delta)
     print("\n\n")
 
-    redundant_circles = []
-    for k,v in new_delta.items():
-        if v == 0:
-            redundant_circles.append(k)
+    key_old = [k for k,v in delta.items()]
+    key_new = [k for k,v in new_delta.items() if v > 0]
+    non_redundant_circles = set(key_old).intersection(key_new)
+    non_redundant_circles = list(non_redundant_circles)
     
-    print("Redundant Disks")
-    pprint.pprint(redundant_circles)
+    print("Non Redundant Disks")
+    pprint.pprint(non_redundant_circles)
     print("\n\n")
+
+    return non_redundant_circles
     
 
 
@@ -924,12 +1123,10 @@ def Random_Points(m, r, k):
 
     
 
-Points_Lines=Random_Points(150, 20, 10)
-Points_Circles = Random_Points(150, 20, 10)
+Points_Lines=Random_Points(70, 20, 10)
+Points_Circles = Random_Points(70, 20, 10)
 
 n = len(Points_Lines)
-# n1= int(n*0.8)
-# points, Points_Circles = Points_Lines[:n1], Points_Lines[n1:]
 Lines=Random_Lines(Points_Lines)
 line_obj=lineCollection(Lines)
 radius=5
@@ -938,6 +1135,37 @@ Circles2=Unplanned_Circles(Points_Circles, radius)
 Circles.extend(Circles2)
 circle_obj=circleCollection(Circles)
 a, b=line_obj.NumLines(), circle_obj.NumCircles()
-disk_cover_algorithm(circle_obj, line_obj)
-sys.stdout = orig_stdout
-f.close()
+
+abc = line_obj.dict_lines
+
+x0 = [float(v.p1.x) for k,v in abc.items()]
+x1 = [float(v.p2.x) for k,v in abc.items()]
+y0 = [float(v.p1.y) for k,v in abc.items()]
+y1 = [float(v.p2.y) for k,v in abc.items()]
+
+xyz = circle_obj.dict_circles
+
+x = [float(c.center.x) for k,c in xyz.items()]
+y = [float(c.center.y) for k,c in xyz.items()]
+
+p = figure()
+
+p.annulus(x, y, radius,radius+0.1, color = 'red', line_width = 3, line_color = "black")
+p.segment(x0, y0, x1, y1, line_width = 3)
+
+non_redundant_disks = disk_cover_algorithm(circle_obj, line_obj)
+# disk_removal(circle_obj, line_obj)
+
+xx = [float(c.center.x) for k,c in circle_obj.dict_circles.items() if k in non_redundant_disks]
+yy = [float(c.center.y) for k,c in circle_obj.dict_circles.items() if k in non_redundant_disks]
+
+pp = figure()
+pp.annulus(xx, yy, radius,radius+0.1, color = 'red', line_width = 3, line_color = "black")
+pp.segment(x0, y0, x1, y1, line_width = 3)
+
+output_file("out.html")
+
+show(row(p,pp))
+
+# sys.stdout = orig_stdout
+# f.close()
