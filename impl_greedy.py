@@ -198,127 +198,127 @@ class Intersection(object):
     #         else:
     #             return False
 
-    def TwoCirclesOneLine(self, circle1index, circle2index, line):
-        circle_intersection_list = self.circle_and_circle[circle1index]
+    # def TwoCirclesOneLine(self, circle1index, circle2index, line):
+    #     circle_intersection_list = self.circle_and_circle[circle1index]
 
-        if circle2index in circle_intersection_list:
+    #     if circle2index in circle_intersection_list:
 
-            line_interesection_list = self.circle_and_line[circle2index]
+    #         line_interesection_list = self.circle_and_line[circle2index]
 
-            if line in line_interesection_list:
+    #         if line in line_interesection_list:
 
-                line_seg = self.dict_lines[line]
-                circle1_val = self.dict_circles[circle1index]
-                circle2_val = self.dict_circles[circle2index]
+    #             line_seg = self.dict_lines[line]
+    #             circle1_val = self.dict_circles[circle1index]
+    #             circle2_val = self.dict_circles[circle2index]
                 
-                v_unit = dict()
-                v_unit = {
-                    "p1 out c1" : not circle1_val.encloses_point(line_seg.points[0]),
-                    "p2 out c1" : not circle1_val.encloses_point(line_seg.points[1]),
-                    "p1 out c2" : not circle2_val.encloses_point(line_seg.points[0]),
-                    "p2 out c2" : not circle2_val.encloses_point(line_seg.points[1]),
-                    "p1 in c1" : circle1_val.encloses_point(line_seg.points[0]),
-                    "p2 in c1" : circle1_val.encloses_point(line_seg.points[1]),
-                    "p1 in c2" : circle2_val.encloses_point(line_seg.points[0]),
-                    "p2 in c2" : circle2_val.encloses_point(line_seg.points[1])
-                }
+    #             v_unit = dict()
+    #             v_unit = {
+    #                 "p1 out c1" : not circle1_val.encloses_point(line_seg.points[0]),
+    #                 "p2 out c1" : not circle1_val.encloses_point(line_seg.points[1]),
+    #                 "p1 out c2" : not circle2_val.encloses_point(line_seg.points[0]),
+    #                 "p2 out c2" : not circle2_val.encloses_point(line_seg.points[1]),
+    #                 "p1 in c1" : circle1_val.encloses_point(line_seg.points[0]),
+    #                 "p2 in c1" : circle1_val.encloses_point(line_seg.points[1]),
+    #                 "p1 in c2" : circle2_val.encloses_point(line_seg.points[0]),
+    #                 "p2 in c2" : circle2_val.encloses_point(line_seg.points[1])
+    #             }
 
-                # v_binary = {
-                #     "p1 and p2 out c1": v_unit["p1 out c1"] and v_unit["p2 out c1"],
-                #     "p1 and p2 out c2": v_unit["p1 out c2"] and v_unit["p2 out c2"],
-                # }
+    #             # v_binary = {
+    #             #     "p1 and p2 out c1": v_unit["p1 out c1"] and v_unit["p2 out c1"],
+    #             #     "p1 and p2 out c2": v_unit["p1 out c2"] and v_unit["p2 out c2"],
+    #             # }
 
-                # v_ternary = {
-                #     "p1 and p2 out c1 not c2": v_binary["p1 and p2 out c1"] and (not(v_unit["p1 out c2"]) or not(v_unit["p2 out c2"])),
-                #     "p1 and p2 out c2 not c1": v_binary["p1 and p2 out c2"] and (not(v_unit["p1 out c1"]) or not(v_unit["p2 out c1"])),
-                #     "p1 and p2 out c1 and c2": v_binary["p1 and p2 out c2"] and v_binary["p1 and p2 out c1"],
-                # }
+    #             # v_ternary = {
+    #             #     "p1 and p2 out c1 not c2": v_binary["p1 and p2 out c1"] and (not(v_unit["p1 out c2"]) or not(v_unit["p2 out c2"])),
+    #             #     "p1 and p2 out c2 not c1": v_binary["p1 and p2 out c2"] and (not(v_unit["p1 out c1"]) or not(v_unit["p2 out c1"])),
+    #             #     "p1 and p2 out c1 and c2": v_binary["p1 and p2 out c2"] and v_binary["p1 and p2 out c1"],
+    #             # }
 
-                case = {
-                    "A": (v_unit["p1 out c1"] and v_unit["p2 out c1"] and v_unit["p1 out c2"] and v_unit["p2 out c2"]),
+    #             case = {
+    #                 "A": (v_unit["p1 out c1"] and v_unit["p2 out c1"] and v_unit["p1 out c2"] and v_unit["p2 out c2"]),
 
-                    "B": ((v_unit["p1 out c1"] and v_unit["p2 out c1"])  
-                        and ((v_unit["p2 in c2"] and v_unit["p1 out c2"]) or (v_unit["p2 in c1"] and v_unit["p2 out c1"]))),
+    #                 "B": ((v_unit["p1 out c1"] and v_unit["p2 out c1"])  
+    #                     and ((v_unit["p2 in c2"] and v_unit["p1 out c2"]) or (v_unit["p2 in c1"] and v_unit["p2 out c1"]))),
                         
-                        # or
+    #                     # or
                         
-                        # ((v_unit["p1 out c2"] and v_unit["p2 out c2"])  
-                        # and ((v_unit["p1 in c1"] and v_unit["p2 out c1"]) or (v_unit["p2 in c1"] and v_unit["p1 out c1"]))),
+    #                     # ((v_unit["p1 out c2"] and v_unit["p2 out c2"])  
+    #                     # and ((v_unit["p1 in c1"] and v_unit["p2 out c1"]) or (v_unit["p2 in c1"] and v_unit["p1 out c1"]))),
 
-                    "C": (v_unit["p1 out c1"] and v_unit["p2 in c1"] and v_unit["p1 out c2"] and v_unit["p2 in c2"])
-                        or (v_unit["p1 in c1"] and v_unit["p2 out c1"] and v_unit["p1 in c2"] and v_unit["p2 out c2"]),
+    #                 "C": (v_unit["p1 out c1"] and v_unit["p2 in c1"] and v_unit["p1 out c2"] and v_unit["p2 in c2"])
+    #                     or (v_unit["p1 in c1"] and v_unit["p2 out c1"] and v_unit["p1 in c2"] and v_unit["p2 out c2"]),
                         
-                        # or
+    #                     # or
                         
-                        # (((v_unit["p1 in c1"] and v_unit["p2 out c1"]) and (v_unit["p1 in c2"] and v_unit["p2 out c2"]))
-                        # or ((v_unit["p2 in c1"] and v_unit["p1 out c1"]) and (v_unit["p2 in c2"] and v_unit["p1 out c2"]))),
+    #                     # (((v_unit["p1 in c1"] and v_unit["p2 out c1"]) and (v_unit["p1 in c2"] and v_unit["p2 out c2"]))
+    #                     # or ((v_unit["p2 in c1"] and v_unit["p1 out c1"]) and (v_unit["p2 in c2"] and v_unit["p1 out c2"]))),
                     
-                    "D": ((v_unit["p1 in c1"] and v_unit["p2 in c1"]) and (v_unit["p2 in c2"] and v_unit["p1 out c2"]))
-                        or ((v_unit["p1 in c1"] and v_unit["p2 out c1"]) and (v_unit["p1 in c2"] and v_unit["p2 in c2"])),
+    #                 "D": ((v_unit["p1 in c1"] and v_unit["p2 in c1"]) and (v_unit["p2 in c2"] and v_unit["p1 out c2"]))
+    #                     or ((v_unit["p1 in c1"] and v_unit["p2 out c1"]) and (v_unit["p1 in c2"] and v_unit["p2 in c2"])),
 
-                    #     or
+    #                 #     or
 
-                    #    ((v_unit["p1 in c2"] and v_unit["p2 in c2"]) and (v_unit["p1 in c1"] and v_unit["p2 out c1"]))
-                    #     or ((v_unit["p2 in c2"] and v_unit["p1 in c2"]) and (v_unit["p1 in c1"] and v_unit["p2 out c1"]))),
+    #                 #    ((v_unit["p1 in c2"] and v_unit["p2 in c2"]) and (v_unit["p1 in c1"] and v_unit["p2 out c1"]))
+    #                 #     or ((v_unit["p2 in c2"] and v_unit["p1 in c2"]) and (v_unit["p1 in c1"] and v_unit["p2 out c1"]))),
                     
-                    "E": (v_unit["p1 in c1"] and v_unit["p2 out c1"] and v_unit["p2 in c2"] and v_unit["p1 out c2"])
-                        # or (v_unit["p2 in c1"] and v_unit["p1 out c1"] and v_unit["p1 in c1"] and v_unit["p2 out c1"])
+    #                 "E": (v_unit["p1 in c1"] and v_unit["p2 out c1"] and v_unit["p2 in c2"] and v_unit["p1 out c2"])
+    #                     # or (v_unit["p2 in c1"] and v_unit["p1 out c1"] and v_unit["p1 in c1"] and v_unit["p2 out c1"])
                     
-                }
+    #             }
 
-                intersects = case["A"] or case["B"] or case["C"] or case["D"] or case["E"]
-                points1 = line_seg.intersection(circle1_val)
-                points2 = line_seg.intersection(circle2_val)
+    #             intersects = case["A"] or case["B"] or case["C"] or case["D"] or case["E"]
+    #             points1 = line_seg.intersection(circle1_val)
+    #             points2 = line_seg.intersection(circle2_val)
 
-                if intersects:
-                    if case["A"]:
-                        p1 = points1[1]
-                        p2 = points2[0]
-                        if circle1_val.encloses_point(p1) and circle2_val.encloses_point(p2):
-                            temp = p1.distance(p2).evalf()
-                            return temp
-                        else:
-                            return None
-                    elif case["B"]:
-                        if len(points1) == 1:
-                            p1 = points1[0]
-                            p2 = points2[0]
-                            temp = p1.distance(p2).evalf()
-                            return temp
-                        elif len(points2) == 1:
-                            p1 = points1[1]
-                            p2 = points2[0]
-                            temp = p1.distance(p2).evalf()
-                            return temp
-                    elif case["C"]:
-                        if v_unit["p2 in c1"] and v_unit["p2 in c2"]:
-                            p2 = line_seg.points[1]
-                            p1 = points2[0]
-                            temp = p2.distance(p1).evalf()
-                            return temp
-                        elif v_unit["p1 in c1"] and v_unit["p1 in c2"]:
-                            p1 = line_seg.points[0]
-                            p2 = points1[0]
-                            temp = p2.distance(p1).evalf()
-                            return temp
-                    elif case["D"]:
-                        if len(points1) == 0:
-                            p1 = points2[0]
-                            p2 = line_seg.points[1]
-                            temp = p2.distance(p1).evalf()
-                            return temp
-                        elif len(points2) == 0:
-                            p1 = line_seg.points[0]
-                            p2 = points1[0]
-                            temp = p2.distance(p1).evalf()
-                            return temp
-                    elif case["E"]:
-                        p1 = points1[0]
-                        p2 = points2[0]
-                        temp = p2.distance(p1).evalf()
-                        return temp
-                else:
-                    return None               
+    #             if intersects:
+    #                 if case["A"]:
+    #                     p1 = points1[1]
+    #                     p2 = points2[0]
+    #                     if circle1_val.encloses_point(p1) and circle2_val.encloses_point(p2):
+    #                         temp = p1.distance(p2).evalf()
+    #                         return temp
+    #                     else:
+    #                         return None
+    #                 elif case["B"]:
+    #                     if len(points1) == 1:
+    #                         p1 = points1[0]
+    #                         p2 = points2[0]
+    #                         temp = p1.distance(p2).evalf()
+    #                         return temp
+    #                     elif len(points2) == 1:
+    #                         p1 = points1[1]
+    #                         p2 = points2[0]
+    #                         temp = p1.distance(p2).evalf()
+    #                         return temp
+    #                 elif case["C"]:
+    #                     if v_unit["p2 in c1"] and v_unit["p2 in c2"]:
+    #                         p2 = line_seg.points[1]
+    #                         p1 = points2[0]
+    #                         temp = p2.distance(p1).evalf()
+    #                         return temp
+    #                     elif v_unit["p1 in c1"] and v_unit["p1 in c2"]:
+    #                         p1 = line_seg.points[0]
+    #                         p2 = points1[0]
+    #                         temp = p2.distance(p1).evalf()
+    #                         return temp
+    #                 elif case["D"]:
+    #                     if len(points1) == 0:
+    #                         p1 = points2[0]
+    #                         p2 = line_seg.points[1]
+    #                         temp = p2.distance(p1).evalf()
+    #                         return temp
+    #                     elif len(points2) == 0:
+    #                         p1 = line_seg.points[0]
+    #                         p2 = points1[0]
+    #                         temp = p2.distance(p1).evalf()
+    #                         return temp
+    #                 elif case["E"]:
+    #                     p1 = points1[0]
+    #                     p2 = points2[0]
+    #                     temp = p2.distance(p1).evalf()
+    #                     return temp
+    #             else:
+    #                 return None               
 
 
                 # index = line_interesection_list.index(line)
@@ -616,7 +616,7 @@ class Intersection(object):
                 temp_val=temp_point2.distance(temp_point1).evalf()
                 temp[0] = Point(float(temp_point1.x), float(temp_point1.y))
                 temp[1] = Point(float(temp_point2.x), float(temp_point2.y))
-            elif not(circle.encloses_point(line_seg.p1) and circle.encloses_point(line_seg.p2)):
+            elif not(circle.encloses_point(line_seg.p1)) and not(circle.encloses_point(line_seg.p2)):
                 if len(temp) == 2:
                     temp_point1=temp[0]
                     temp_point2=temp[1]
